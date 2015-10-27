@@ -3,16 +3,24 @@ var bcrypt = require('bcrypt');
 var Schema = Mongoose.Schema;
 
 var UserSchema = new Schema({
-    username:{
-      type: String,
-      index: { unique: true}
-    },
-    password: String,
-    profile: {
-    	email: String,
-    	about: String,
-    	interests: []
+  username: {
+    type: String,
+    index: {
+      unique: true
     }
+  },
+  password: String,
+  profile: {
+    email: String,
+    about: String,
+    interests: []
+  },
+  facebook: {
+    id: String,
+    token: String,
+    email: String,
+    name: String
+  }
 });
 //hash
 //

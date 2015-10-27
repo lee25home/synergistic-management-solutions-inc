@@ -6,6 +6,7 @@ var cookieParser = require('cookie-parser');
 var session = require('express-session');
 var passport = require('passport');
 var flash = require('connect-flash');
+var MongoStore = require('connect-mongo')(session);
 var mongoose = require('./database/config');
 var Helpers = require('./request_handler');
 
@@ -16,7 +17,7 @@ var routes = express.Router()
 routes.get('/app-bundle.js',
   // Tell browserify to user reactify as it's JSX compiler
   browserify('./client/app.js', {
-    transform: [ require('reactify') ]
+    transform: [require('reactify')]
   }))
 
 //redo once we have some public stuffs
@@ -26,18 +27,20 @@ routes.get('/api/tags-example', function(req, res) {
 
 //Here are all my endpoints! See the README for details
 //on what kind of data is expected/being returned
-routes.get('/users', Helpers.getUsers);
-routes.get('/users/*', Helpers.getProfile);
-routes.post('/signup', Helpers.signUp);
-routes.post('/signin', Helpers.signIn);
-routes.post('/users/*', Helpers.submitProfile);
+// routes.get('/users', Helpers.getUsers);
+// routes.get('/users/*', Helpers.getProfile);
+// routes.post('/signup', Helpers.signUp);
+// routes.post('/signin', Helpers.signIn);
+// routes.post('/users/*', Helpers.submitProfile);
 
 var assetFolder = Path.resolve(__dirname, '../client/public')
 routes.use(express.static(assetFolder))
 
 if (process.env.NODE_ENV !== 'test') {
   app.use(require('body-parser').json())
-  app.use(require('body-parser').urlencoded({ extended: true }));
+  app.use(require('body-parser').urlencoded({
+    extended: true
+  }));
 
   routes.get('/*', function(req, res) {
     res.sendFile(assetFolder + '/index.html')
@@ -53,11 +56,14 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(session({
     secret: 'Jang',
     saveUninitialized: true,
-    resave: true
+    resave: true,
+    store: new MongoStore({
+      mongooseConnection: mongoose.connection
+    })
   }));
-//saveUninitialized saves session to database for persistence log in
-//if set to true - it will save
-// resave -  if nothing is changed - save it again
+  //saveUninitialized saves session to database for persistence log in
+  //if set to true - it will save
+  // resave -  if nothing is changed - save it again
 
   app.use(passport.initialize());
   app.use(passport.session());
@@ -67,7 +73,6 @@ if (process.env.NODE_ENV !== 'test') {
 
   app.use('/', routes)
   require('./routes.js')(app, passport);
-
 
   // Start the server!
   var port = process.env.PORT || 4000
