@@ -58,7 +58,8 @@ if (process.env.NODE_ENV !== 'test') {
     saveUninitialized: true,
     resave: true,
     store: new MongoStore({
-      mongooseConnection: mongoose.connection
+      mongooseConnection: mongoose.connection,
+      ttl: 1 * 24 * 60 * 60
     })
   }));
   //saveUninitialized saves session to database for persistence log in
