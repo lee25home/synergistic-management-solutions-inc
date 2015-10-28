@@ -11,19 +11,19 @@ var mongoose = require('./database/config');
 var Helpers = require('./request_handler');
 
 var app = express()
-var routes = express.Router()
-
-//redo once we have some public stuffs
-routes.get('/app-bundle.js',
-  // Tell browserify to user reactify as it's JSX compiler
-  browserify('./client/app.js', {
-    transform: [require('reactify')]
-  }))
-
-//redo once we have some public stuffs
-routes.get('/api/tags-example', function(req, res) {
-  res.send(['node', 'express', 'browserify'])
-})
+  // var routes = express.Router()
+  //
+  // //redo once we have some public stuffs
+  // routes.get('/app-bundle.js',
+  //   // Tell browserify to user reactify as it's JSX compiler
+  //   browserify('./client/app.js', {
+  //     transform: [require('reactify')]
+  //   }))
+  //
+  // //redo once we have some public stuffs
+  // routes.get('/api/tags-example', function(req, res) {
+  //   res.send(['node', 'express', 'browserify'])
+  // })
 
 //Here are all my endpoints! See the README for details
 //on what kind of data is expected/being returned
@@ -34,7 +34,7 @@ routes.get('/api/tags-example', function(req, res) {
 // routes.post('/users/*', Helpers.submitProfile);
 
 var assetFolder = Path.resolve(__dirname, '../client/public')
-routes.use(express.static(assetFolder))
+  // routes.use(express.static(assetFolder))
 
 if (process.env.NODE_ENV !== 'test') {
   app.use(require('body-parser').json())
@@ -42,9 +42,9 @@ if (process.env.NODE_ENV !== 'test') {
     extended: true
   }));
 
-  routes.get('/*', function(req, res) {
-    res.sendFile(assetFolder + '/index.html')
-  })
+  // routes.get('/*', function(req, res) {
+  //   res.sendFile(assetFolder + '/index.html')
+  // })
 
   //middleware - executes on any client and server interaction trade
   //marks the request and time on console
@@ -71,9 +71,26 @@ if (process.env.NODE_ENV !== 'test') {
 
   app.use(flash());
 
+  var auth = express.Router();
+  require('./router.js')(auth, passport);
 
-  app.use('/', routes)
-  require('./routes.js')(app, passport);
+  auth.get('/app-bundle.js',
+    // Tell browserify to user reactify as it's JSX compiler
+    browserify('./client/app.js', {
+      transform: [require('reactify')]
+    }));
+
+  auth.get('/api/tags-example', function(req, res) {
+    res.send(['node', 'express', 'browserify']);
+  });
+
+  auth.use(express.static(assetFolder))
+
+  app.use('/auth', auth)
+
+  var secure = express.Router();
+  require('./secure.js')(secure, passport);
+  app.use('/', secure);
 
   // Start the server!
   var port = process.env.PORT || 4000
